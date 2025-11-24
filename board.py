@@ -229,20 +229,19 @@ class Board:
 
     # ----------- render ASCII -----------
     def render(self):
-        """Devuelve string ASCII del tablero con puentes.
-        - Isl as: números
-        - H: '-' para 1, '=' para 2
-        - V: '|' para 1, '║' para 2
         """
-        # canvas con celdas y corredores intermedios
-        R = self.n_rows * 2 + 1
-        C = self.n_cols * 2 + 1
-        canvas = [[" " for _ in range(C)] for _ in range(R)]
+        Construye un dibujo ASCII del tablero con las islas y los puentes actuales.
+        Para más claridad se usa una grilla “doble”: 2*filas+1 por 2*cols+1.
+        """
+        h = 2 * self.n_rows + 1
+        w = 2 * self.n_cols + 1
+        canvas = [[" " for _ in range(w)] for _ in range(h)]
 
         # dibujar islas
         for (r, c, val) in self.islands:
-            rr, cc = 2 * r + 1, 2 * c + 1
-            canvas[rr][cc] = str(val)
+            cr = 2 * r + 1
+            cc = 2 * c + 1
+            canvas[cr][cc] = str(val)
 
         # dibujar puentes
         for key, info in self.bridges.items():
@@ -297,7 +296,7 @@ class Board:
         return len(seen) == len(self.islands)
 
     def full_check(self):
-        """Valida reglas finales: 
+        """Valida reglas finales:
            - cada isla cumple su número
            - no hay cruces (se evita al agregar)
            - conectividad 1 componente
