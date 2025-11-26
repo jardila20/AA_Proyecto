@@ -1,5 +1,7 @@
+#Versión documentada
 from hashi_solver import HashiSolver
 
+# Texto de ayuda para el modo humano
 HELP = """\
 Comandos disponibles (modo humano):
   LOAD <ruta>                 Carga un tablero desde archivo
@@ -13,6 +15,10 @@ Comandos disponibles (modo humano):
 """
 
 def to0(r, c):
+    """
+    Convierte coordenadas 1-based (las que ingresa el usuario) a 0-based
+    (las que usa internamente Board).
+    """
     return (r - 1, c - 1)
 
 def main():
@@ -20,7 +26,9 @@ def main():
     solver = HashiSolver()
     board = None
 
+    # ------------------------------------------------------------------
     # 1) Cargar tablero inicial
+    # ------------------------------------------------------------------
     while board is None:
         try:
             path = input("Ruta del archivo de tablero (ENTER para salir): ").strip()
@@ -40,7 +48,9 @@ def main():
             print(f"Error cargando tablero: {e}")
             board = None  # volver a pedir
 
-    # 2) Elegir tipo de jugador
+    # ------------------------------------------------------------------
+    # 2) Elegir tipo de jugador: Humano o Sintético
+    # ------------------------------------------------------------------
     while True:
         try:
             modo = input("\n¿Quién jugará? [H]umano / [S]intético: ").strip().upper()
@@ -51,7 +61,9 @@ def main():
             break
         print("Opción no válida. Responde con H o S.")
 
-    # 2.a) Modo sintético: resolver de una vez y salir
+    # ------------------------------------------------------------------
+    # 2.a) Modo sintético: el algoritmo intenta resolver de una vez y salimos
+    # ------------------------------------------------------------------
     if modo == "S":
         print("\n=== Modo jugador sintético (BT + Forward Checking + MRV) ===")
         exito = solver.solve_csp(board, verbose=False)
@@ -60,22 +72,15 @@ def main():
             solver.print_board(board)
             ok, msg = board.full_check()
             print("\nCHECK final:", "OK" if ok else f"INVALIDO: {msg}")
-
-            # -------- generar imagen de la solución --------
-            try:
-                nombre_png = "solucion_hashi.png"
-                solver.save_solution_image(board, nombre_png)
-                print(f"\nImagen de la solución guardada en '{nombre_png}'")
-            except Exception as e:
-                print(f"\nLa solución es correcta, pero hubo un error generando la imagen: {e}")
-
         else:
             print("\nNo se encontró solución. "
                   "Verifica que el tablero sea resoluble y respete el enunciado.")
+        # Importante: salimos después de que juegue el sintético
         return
 
-
+    # ------------------------------------------------------------------
     # 2.b) Modo humano: bucle de comandos
+    # ------------------------------------------------------------------
     print("\nModo humano. Escribe HELP para ver comandos.\n")
 
     while True:
@@ -92,9 +97,15 @@ def main():
         cmd = parts[0].upper()
 
         try:
+            # ----------------------------------------------------------
+            # HELP: mostrar ayuda
+            # ----------------------------------------------------------
             if cmd == "HELP":
                 print(HELP)
 
+            # ----------------------------------------------------------
+            # LOAD <ruta>: cargar otro tablero desde archivo
+            # ----------------------------------------------------------
             elif cmd == "LOAD":
                 if len(parts) != 2:
                     print("Uso: LOAD <ruta>")
@@ -108,12 +119,18 @@ def main():
                     print(f"Error cargando tablero: {e}")
                     board = None
 
+            # ----------------------------------------------------------
+            # SHOW: mostrar el tablero actual con puentes
+            # ----------------------------------------------------------
             elif cmd == "SHOW":
                 if not board:
                     print("Primero LOAD <ruta>.")
                     continue
                 solver.print_board(board)
 
+            # ----------------------------------------------------------
+            # ADD r1 c1 r2 c2 k: agregar k puentes entre dos islas (1-based)
+            # ----------------------------------------------------------
             elif cmd == "ADD":
                 if not board:
                     print("Primero LOAD <ruta>.")
@@ -129,6 +146,9 @@ def main():
                 if ok:
                     solver.print_board(board)
 
+            # ----------------------------------------------------------
+            # REM r1 c1 r2 c2 k: quitar k puentes entre dos islas (1-based)
+            # ----------------------------------------------------------
             elif cmd == "REM":
                 if not board:
                     print("Primero LOAD <ruta>.")
@@ -144,6 +164,9 @@ def main():
                 if ok:
                     solver.print_board(board)
 
+            # ----------------------------------------------------------
+            # CHECK: validar reglas finales (cuentas + conectividad)
+            # ----------------------------------------------------------
             elif cmd == "CHECK":
                 if not board:
                     print("Primero LOAD <ruta>.")
@@ -151,6 +174,9 @@ def main():
                 ok, msg = board.full_check()
                 print("OK" if ok else f"INVALIDO: {msg}")
 
+            # ----------------------------------------------------------
+            # PENDING: ver cuántos puentes faltan por isla
+            # ----------------------------------------------------------
             elif cmd == "PENDING":
                 if not board:
                     print("Primero LOAD <ruta>.")
@@ -161,14 +187,21 @@ def main():
                     out.append(f"({r+1},{c+1})={val} -> faltan {pend}")
                 print(", ".join(out) if out else "(sin islas)")
 
+            # ----------------------------------------------------------
+            # EXIT: salir del programa
+            # ----------------------------------------------------------
             elif cmd == "EXIT":
                 print("Adiós!")
                 break
 
+            # ----------------------------------------------------------
+            # Comando desconocido
+            # ----------------------------------------------------------
             else:
                 print("Comando no reconocido. Escribe HELP.")
 
         except Exception as e:
+            # Cualquier excepción inesperada se muestra pero no tumba el programa
             print(f"Error: {e}")
 
 if __name__ == "__main__":

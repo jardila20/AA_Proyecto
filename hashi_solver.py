@@ -230,3 +230,106 @@ class HashiSolver:
             return False
 
         return backtrack(domains, unassigned)
+    
+
+
+        # ------------------------------------------------------------------
+    # Dibujo gráfico de la solución con matplotlib
+    # ------------------------------------------------------------------
+    def save_solution_image(self, board: Board, filename: str = "solucion_hashi.png") -> None:
+        """
+        Genera una imagen PNG del tablero actual usando matplotlib.
+
+        - Dibuja una grilla punteada.
+        - Las islas como círculos blancos con borde negro y número dentro.
+        - Los puentes como líneas simples o dobles, horizontales o verticales.
+
+        Requiere tener instalado matplotlib:
+            pip install matplotlib
+        """
+        import matplotlib.pyplot as plt
+
+        # Pequeño helper: convertir (fila,columna) 0-based a coordenadas (x,y)
+        # en el plano de dibujo. Usamos +0.5 para centrar cada isla en la celda,
+        # y "invertimos" la fila para que la fila 0 quede arriba en la imagen,
+        # como en el enunciado.
+        def cell_to_xy(r: int, c: int):
+            x = c + 0.5
+            y = (board.n_rows - 1 - r) + 0.5
+            return x, y
+
+        fig, ax = plt.subplots(figsize=(4, 4))
+        ax.set_aspect("equal")
+
+        # ------------------- grilla punteada -------------------
+        for x in range(board.n_cols + 1):
+            ax.axvline(x, linestyle=":", linewidth=0.5, color="lightgray")
+        for y in range(board.n_rows + 1):
+            ax.axhline(y, linestyle=":", linewidth=0.5, color="lightgray")
+
+        # ------------------- puentes -------------------
+        for key, info in board.bridges.items():
+            if info["k"] <= 0:
+                continue
+
+            a, b = list(key)
+            (r1, c1) = a
+            (r2, c2) = b
+            x1, y1 = cell_to_xy(r1, c1)
+            x2, y2 = cell_to_xy(r2, c2)
+            k = info["k"]
+
+            # Puentes horizontales o verticales (caso estándar Hashi)
+            if info["dir"] == board.H:  # horizontal
+                if k == 1:
+                    ax.plot([x1, x2], [y1, y2], linewidth=2, color="black")
+                else:
+                    # doble: dos líneas paralelas, una un poco arriba y otra abajo
+                    offset = 0.10
+                    ax.plot([x1, x2], [y1 + offset, y2 + offset], linewidth=2, color="black")
+                    ax.plot([x1, x2], [y1 - offset, y2 - offset], linewidth=2, color="black")
+
+            elif info["dir"] == board.V:  # vertical
+                if k == 1:
+                    ax.plot([x1, x2], [y1, y2], linewidth=2, color="black")
+                else:
+                    # doble: dos líneas paralelas, una a la izquierda y otra a la derecha
+                    offset = 0.10
+                    ax.plot([x1 + offset, x2 + offset], [y1, y2], linewidth=2, color="black")
+                    ax.plot([x1 - offset, x2 - offset], [y1, y2], linewidth=2, color="black")
+
+            else:
+                # Si en algún momento habilitas diagonales y quieres dibujarlas,
+                # puedes tratarlas aquí. Ahora simplemente las dibujamos como una
+                # sola línea.
+                if k == 1:
+                    ax.plot([x1, x2], [y1, y2], linewidth=2, color="black")
+                else:
+                    offset = 0.10
+                    ax.plot([x1, x2], [y1, y2], linewidth=2, color="black")
+                    ax.plot([x1 + offset, x2 + offset], [y1 + offset, y2 + offset],
+                            linewidth=2, color="black")
+
+        # ------------------- islas -------------------
+        for (r, c, val) in board.islands:
+            x, y = cell_to_xy(r, c)
+            # círculo blanco con borde negro
+            circle = plt.Circle((x, y), 0.35, edgecolor="black",
+                                facecolor="white", linewidth=2)
+            ax.add_patch(circle)
+            # número centrado
+            ax.text(x, y, str(val), ha="center", va="center",
+                    fontsize=14, fontweight="bold", color="black")
+
+        # Ajustar límites y quitar ejes
+                # Ajustar límites y quitar ejes
+        ax.set_xlim(0, board.n_cols)
+        ax.set_ylim(0, board.n_rows)
+        # ax.invert_yaxis()  # NO la necesitamos porque ya volteamos y en cell_to_xy
+        ax.axis("off")
+        plt.tight_layout()
+
+        fig.savefig(filename, dpi=200)
+        plt.close(fig)
+
+
